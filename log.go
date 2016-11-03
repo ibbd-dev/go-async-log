@@ -197,9 +197,9 @@ func (lf *LogFile) flush() error {
 // 获取文件名的后缀
 func (lf *LogFile) getFilenameSuffix() string {
 	if lf.logRotate.rotate == RotateDate {
-		return time.Now().Local().Format("20060102")
+		return time.Now().Format("20060102")
 	}
-	return time.Now().Local().Format("2006010215")
+	return time.Now().Format("2006010215")
 }
 
 // 直接写入日志文件

@@ -16,11 +16,11 @@ const (
 var (
 	// 日志等级
 	levelTitle = map[Priority]string{
-		LevelDebug: "DEBUG",
-		LevelInfo:  "INFO",
-		LevelWarn:  "WARN",
-		LevelError: "ERROR",
-		LevelFatal: "FATAL",
+		LevelDebug: "[DEBUG]",
+		LevelInfo:  "[INFO]",
+		LevelWarn:  "[WARN]",
+		LevelError: "[ERROR]",
+		LevelFatal: "[FATAL]",
 	}
 )
 
@@ -55,7 +55,7 @@ func (lf *LogFile) Fatal(msg string) error {
 
 func (lf *LogFile) writeLevelMsg(msg string, level Priority) error {
 	if level >= lf.level {
-		return lf.Write("[" + levelTitle[level] + "] " + msg)
+		return lf.Write(levelTitle[level] + msg)
 	}
 
 	return nil
