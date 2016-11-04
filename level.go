@@ -55,7 +55,7 @@ func (lf *LogFile) Fatal(msg string) error {
 
 func (lf *LogFile) writeLevelMsg(msg string, level Priority) error {
 	if level >= lf.level {
-		return lf.Write(levelTitle[level] + msg)
+		return lf.Write(levelTitle[level] + " " + msg)
 	}
 
 	return nil
