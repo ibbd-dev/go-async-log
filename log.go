@@ -78,6 +78,12 @@ const (
 	cacheInitCap = 64
 )
 
+// 是否需要Flag信息
+const (
+	NoFlag  = 0
+	StdFlag = log.LstdFlags
+)
+
 // 异步日志变量
 var asyncLog *asyncLogType
 
@@ -110,7 +116,7 @@ func NewLogFile(filename string) *LogFile {
 
 	lf := &LogFile{
 		filename: filename,
-		flag:     log.LstdFlags,
+		flag:     StdFlag,
 	}
 
 	// 默认按小时切割文件
@@ -140,7 +146,7 @@ func (lf *LogFile) SetUseCache(useCache bool) {
 
 // 写缓存
 func (lf *LogFile) Write(msg string) error {
-	if lf.flag == log.LstdFlags {
+	if lf.flag == StdFlag {
 		msg = time.Now().Format(logTimeFormat) + " " + msg + newlineChar
 	} else {
 		msg = msg + newlineChar
