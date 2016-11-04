@@ -1,6 +1,7 @@
 package asyncLog
 
 import (
+	"encoding/json"
 	"log"
 	"os"
 	"strings"
@@ -150,7 +151,7 @@ func (lf *LogFile) SetUseCache(useCache bool) {
 	lf.cache.use = useCache
 }
 
-// 写缓存
+// Write 写缓存
 func (lf *LogFile) Write(msg string) error {
 	if lf.flag == StdFlag {
 		msg = time.Now().Format(logTimeFormat) + " " + msg + newlineChar
@@ -166,6 +167,16 @@ func (lf *LogFile) Write(msg string) error {
 	}
 
 	return lf.directWrite(msg)
+}
+
+// WriteJson 写入json数据
+func (lf *LogFile) WriteJson(data interface{}) error {
+	bts, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	return lf.Write(string(bts))
 }
 
 //*********************** 以下是私有函数 ************************************
