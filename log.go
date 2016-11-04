@@ -10,6 +10,9 @@ import (
 
 type asyncLogType struct {
 	files map[string]*LogFile // 下标是文件名
+
+	// 避免并发new对象
+	sync.Mutex
 }
 
 type LogFile struct {
@@ -110,7 +113,9 @@ func init() {
 }
 
 func NewLogFile(filename string) *LogFile {
+	asyncLog.Lock()
 	if lf, ok := asyncLog.files[filename]; ok {
+		asyncLog.Unlock()
 		return lf
 	}
 
@@ -118,6 +123,9 @@ func NewLogFile(filename string) *LogFile {
 		filename: filename,
 		flag:     StdFlag,
 	}
+
+	asyncLog.files[filename] = lf
+	asyncLog.Unlock()
 
 	// 默认按小时切割文件
 	lf.logRotate.rotate = RotateHour
@@ -127,8 +135,6 @@ func NewLogFile(filename string) *LogFile {
 
 	// TODO 同步的时间周期，缓存开启才有效
 	lf.sync.cycle = time.Second
-
-	asyncLog.files[filename] = lf
 	return lf
 }
 
