@@ -67,7 +67,8 @@ const (
 
 const (
 	// 写日志时前缀的时间格式
-	logTimeFormat string = "2006-01-02 15:04:05"
+	// "2006-01-02T15:04:05Z07:00"
+	logTimeFormat string = time.RFC3339
 
 	// 文件写入mode
 	fileOpenMode = 0666
