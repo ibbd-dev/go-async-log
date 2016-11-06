@@ -33,6 +33,10 @@ func NewLevelLog(filename string, logLevel Priority) *LogFile {
 	return lf
 }
 
+func (lf *LogFile) SetLevel(logLevel Priority) {
+	lf.level = logLevel
+}
+
 func (lf *LogFile) Debug(msg string) error {
 	return lf.writeLevelMsg(msg, LevelDebug)
 }

@@ -30,27 +30,30 @@ go get -u github.com/ibbd-dev/go-async-log
 普通写入日志文件
 
 ```go
-	lf := asyncLog.NewLogFile("/tmp/test.log")
+lf := asyncLog.NewLogFile("/tmp/test.log")
 
-    // 设置按天切割文件，如果默认则是按小时
-	lf.SetRotate(asyncLog.RotateDate)
+// 设置按天切割文件，如果默认则是按小时
+lf.SetRotate(asyncLog.RotateDate)
 
-	_ = lf.Write("lf: hello world")
+_ = lf.Write("lf: hello world")
 
-    // 注意：因为是每秒写入一次，所以这里需要暂停一下
-	time.Sleep(time.Second * 2)
+// 注意：因为是每秒写入一次，所以这里需要暂停一下
+time.Sleep(time.Second * 2)
 
 ```
 
 写入错误等级文件
 
 ```go
-	infoFile := asyncLog.NewLevelLog("/tmp/test-info.log", asyncLog.LevelInfo)  // 只有Info级别或者以上级别的日志才会被记录
-	infoFile.Debug("hello world") // 该日志不会写入文件
-	infoFile.Info("hello world")
-	infoFile.Error("hello world")
+infoFile := asyncLog.NewLevelLog("/tmp/test-info.log", asyncLog.LevelInfo)  // 只有Info级别或者以上级别的日志才会被记录
+infoFile.Debug("hello world") // 该日志不会写入文件
+infoFile.Info("hello world")
+infoFile.Error("hello world")
 
-	time.Sleep(time.Second * 2)
+// 需要改变日志写入等级时，例如测试阶段
+infoFile.SetLevel(asyncLog.LevelDebug)
+
+time.Sleep(time.Second * 2)
 ```
 
 ## 性能数据
