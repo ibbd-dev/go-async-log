@@ -14,13 +14,12 @@ type asyncLogType struct {
 	files map[string]*LogFile // 下标是文件名
 
 	// 避免并发new对象
-	sync.Mutex
+	sync.RWMutex
 }
 
 type LogFile struct {
-	filename   string     // 原始文件名（包含完整目录）
-	flag       int        // 默认为log.LstdFlags
-	writeMutex sync.Mutex // 写文件时的锁
+	filename string // 原始文件名（包含完整目录）
+	flag     int    // 默认为log.LstdFlags
 
 	// 同步设置
 	sync struct {
@@ -38,7 +37,7 @@ type LogFile struct {
 		data []string // 缓存数据
 
 		// 写cache时的互斥锁
-		writeMutex sync.Mutex
+		mutex sync.Mutex
 	}
 
 	// 文件切割
@@ -111,11 +110,13 @@ func init() {
 			select {
 			case <-timer.C:
 				//now := nowFunc()
+				asyncLog.RLock()
 				for _, file := range asyncLog.files {
 					if file.sync.status != statusDoing {
 						go file.flush()
 					}
 				}
+				asyncLog.RUnlock()
 			}
 		}
 
@@ -124,8 +125,9 @@ func init() {
 
 func NewLogFile(filename string) *LogFile {
 	asyncLog.Lock()
+	defer asyncLog.Unlock()
+
 	if lf, ok := asyncLog.files[filename]; ok {
-		asyncLog.Unlock()
 		return lf
 	}
 
@@ -135,7 +137,6 @@ func NewLogFile(filename string) *LogFile {
 	}
 
 	asyncLog.files[filename] = lf
-	asyncLog.Unlock()
 
 	// 默认按小时切割文件
 	lf.logRotate.rotate = RotateHour
@@ -206,14 +207,13 @@ func (lf *LogFile) WriteJson(data interface{}) error {
 //*********************** 以下是私有函数 ************************************
 
 func (lf *LogFile) appendCache(msg string) {
-	lf.cache.writeMutex.Lock()
+	lf.cache.mutex.Lock()
 	lf.cache.data = append(lf.cache.data, msg)
-	lf.cache.writeMutex.Unlock()
+	lf.cache.mutex.Unlock()
 }
 
 // 同步缓存到文件中
 func (lf *LogFile) flush() error {
-
 	lf.sync.status = statusDoing
 	defer func() {
 		lf.sync.status = statusDone
@@ -227,10 +227,10 @@ func (lf *LogFile) flush() error {
 	defer file.Close()
 
 	// 获取缓存数据
-	lf.cache.writeMutex.Lock()
+	lf.cache.mutex.Lock()
 	cache := lf.cache.data
 	lf.cache.data = make([]string, 0, cacheInitCap)
-	lf.cache.writeMutex.Unlock()
+	lf.cache.mutex.Unlock()
 
 	if len(cache) == 0 {
 		return nil
@@ -265,9 +265,9 @@ func (lf *LogFile) directWrite(msg []byte) error {
 	}
 	defer file.Close()
 
-	lf.writeMutex.Lock()
+	lf.logRotate.mutex.Lock()
 	_, err = file.Write(msg)
-	lf.writeMutex.Unlock()
+	lf.logRotate.mutex.Unlock()
 
 	return err
 }
@@ -307,8 +307,9 @@ func (lf *LogFile) openFile() (*os.File, error) {
 func (lf *LogFile) openFileNoCache() (*os.File, error) {
 	logFilename := lf.filename + "." + lf.getFilenameSuffix()
 
-	lf.writeMutex.Lock()
-	defer lf.writeMutex.Unlock()
+	lf.logRotate.mutex.Lock()
+	defer lf.logRotate.mutex.Unlock()
+
 	file, err := os.OpenFile(logFilename, fileFlag, fileOpenMode)
 	if err != nil {
 		// 重试
