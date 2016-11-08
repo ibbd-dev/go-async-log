@@ -103,7 +103,8 @@ func init() {
 		files: make(map[string]*LogFile),
 	}
 
-	timer := time.NewTicker(time.Second)
+	timer := time.NewTicker(time.Millisecond * 100)
+	//timer := time.NewTicker(time.Second)
 	go func() {
 		for {
 			select {
@@ -174,13 +175,11 @@ func (lf *LogFile) Write(msg string) error {
 	}
 
 	if lf.cache.use {
-		lf.writeMutex.Lock()
-		lf.cache.data = append(lf.cache.data, msg)
-		lf.writeMutex.Unlock()
+		lf.appendCache(msg)
 		return nil
 	}
 
-	return lf.directWrite(msg)
+	return lf.directWrite([]byte(msg))
 }
 
 // WriteJson 写入json数据
@@ -195,10 +194,21 @@ func (lf *LogFile) WriteJson(data interface{}) error {
 		return err
 	}
 
-	return lf.Write(string(bts))
+	if lf.cache.use {
+		lf.appendCache(string(bts))
+		return nil
+	}
+
+	return lf.directWrite(bts)
 }
 
 //*********************** 以下是私有函数 ************************************
+
+func (lf *LogFile) appendCache(msg string) {
+	lf.writeMutex.Lock()
+	lf.cache.data = append(lf.cache.data, msg)
+	lf.writeMutex.Unlock()
+}
 
 // 同步缓存到文件中
 func (lf *LogFile) flush() error {
@@ -245,7 +255,7 @@ func (lf *LogFile) getFilenameSuffix() string {
 }
 
 // 直接写入日志文件
-func (lf *LogFile) directWrite(msg string) error {
+func (lf *LogFile) directWrite(msg []byte) error {
 	file, err := lf.openFile()
 	//file, err := lf.openFileNoCache()
 	if err != nil {
@@ -254,7 +264,7 @@ func (lf *LogFile) directWrite(msg string) error {
 	defer file.Close()
 
 	lf.writeMutex.Lock()
-	_, err = file.WriteString(msg)
+	_, err = file.Write(msg)
 	lf.writeMutex.Unlock()
 
 	return err
