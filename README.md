@@ -15,6 +15,7 @@ go get -u github.com/ibbd-dev/go-async-log
 - 错误等级实现
 - 可以写入json数据
 - 时间格式采用`RFC3339`，格式如`2006-01-02T15:04:05Z07:00`
+- 支持按概率写log
 
 ## 配置项
 
@@ -35,6 +36,8 @@ lf := asyncLog.NewLogFile("/tmp/test.log")
 // 设置按天切割文件，如果默认则是按小时
 lf.SetRotate(asyncLog.RotateDate)
 
+lf.SetProbability(0.5) // 设置写log的概率，默认全部都写入
+
 _ = lf.Write("lf: hello world")
 
 // 注意：因为是每秒写入一次，所以这里需要暂停一下
@@ -46,6 +49,7 @@ time.Sleep(time.Second * 2)
 
 ```go
 infoFile := asyncLog.NewLevelLog("/tmp/test-info.log", asyncLog.LevelInfo)  // 只有Info级别或者以上级别的日志才会被记录
+infoFile.SetProbability(0.5) // 设置写log的概率，默认全部都写入
 infoFile.Debug("hello world") // 该日志不会写入文件
 infoFile.Info("hello world")
 infoFile.Error("hello world")

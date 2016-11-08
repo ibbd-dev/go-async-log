@@ -52,6 +52,16 @@ func TestNewLogFile(t *testing.T) {
 	time.Sleep(time.Second * 2)
 }
 
+func TestProbability(t *testing.T) {
+	lf := NewLogFile("/tmp/test-probability.log")
+	lf.SetProbability(0.5)
+	for i := 0; i < 20; i++ {
+		lf.Write("probability")
+	}
+
+	time.Sleep(time.Second)
+}
+
 func BenchmarkWrite(b *testing.B) {
 	lf := NewLogFile("/tmp/bench-test.log")
 	b.RunParallel(func(pb *testing.PB) {

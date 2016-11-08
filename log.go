@@ -3,6 +3,7 @@ package asyncLog
 import (
 	"encoding/json"
 	"log"
+	"math/rand"
 	"os"
 	"strings"
 	"sync"
@@ -22,7 +23,7 @@ type LogFile struct {
 
 	// 同步设置
 	sync struct {
-		cycle     time.Duration // 同步数据到文件的周期，默认为1秒
+		duration  time.Duration // 同步数据到文件的周期，默认为1秒
 		beginTime time.Time     // 开始同步的时间，判断同步的耗时
 		status    syncStatus    // 同步状态
 	}
@@ -46,6 +47,9 @@ type LogFile struct {
 		suffix string     // 切割后的文件名后缀
 		mutex  sync.Mutex // 文件名锁
 	}
+
+	// 日志写入概率
+	probability float32
 }
 
 // log同步的状态
@@ -135,8 +139,11 @@ func NewLogFile(filename string) *LogFile {
 	// 默认开启缓存
 	lf.cache.use = true
 
+	// 日志写入概率，默认为1.1, 就是全部写入
+	lf.probability = 1.1
+
 	// TODO 同步的时间周期，缓存开启才有效
-	lf.sync.cycle = time.Second
+	lf.sync.duration = time.Second
 	return lf
 }
 
@@ -152,8 +159,17 @@ func (lf *LogFile) SetUseCache(useCache bool) {
 	lf.cache.use = useCache
 }
 
+func (lf *LogFile) SetProbability(probability float32) {
+	lf.probability = probability
+}
+
 // Write 写缓存
 func (lf *LogFile) Write(msg string) error {
+	if lf.probability < 1.0 && rand.Float32() > lf.probability {
+		// 按照概率写入
+		return nil
+	}
+
 	if lf.flag == StdFlag {
 		msg = time.Now().Format(logTimeFormat) + " " + msg + newlineChar
 	} else {
