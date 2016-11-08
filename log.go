@@ -96,6 +96,8 @@ const (
 // 异步日志变量
 var asyncLog *asyncLogType
 
+var nowFunc = time.Now
+
 func init() {
 	asyncLog = &asyncLogType{
 		files: make(map[string]*LogFile),
@@ -106,7 +108,7 @@ func init() {
 		for {
 			select {
 			case <-timer.C:
-				//now := time.Now()
+				//now := nowFunc()
 				for _, file := range asyncLog.files {
 					if file.sync.status != statusDoing {
 						go file.flush()
@@ -165,13 +167,8 @@ func (lf *LogFile) SetProbability(probability float32) {
 
 // Write 写缓存
 func (lf *LogFile) Write(msg string) error {
-	if lf.probability < 1.0 && rand.Float32() > lf.probability {
-		// 按照概率写入
-		return nil
-	}
-
 	if lf.flag == StdFlag {
-		msg = time.Now().Format(logTimeFormat) + " " + msg + newlineChar
+		msg = nowFunc().Format(logTimeFormat) + " " + msg + newlineChar
 	} else {
 		msg = msg + newlineChar
 	}
@@ -188,6 +185,11 @@ func (lf *LogFile) Write(msg string) error {
 
 // WriteJson 写入json数据
 func (lf *LogFile) WriteJson(data interface{}) error {
+	if lf.probability < 1.0 && rand.Float32() > lf.probability {
+		// 按照概率写入
+		return nil
+	}
+
 	bts, err := json.Marshal(data)
 	if err != nil {
 		return err
@@ -237,9 +239,9 @@ func (lf *LogFile) flush() error {
 // 获取文件名的后缀
 func (lf *LogFile) getFilenameSuffix() string {
 	if lf.logRotate.rotate == RotateDate {
-		return time.Now().Format("20060102")
+		return nowFunc().Format("20060102")
 	}
-	return time.Now().Format("2006010215")
+	return nowFunc().Format("2006010215")
 }
 
 // 直接写入日志文件

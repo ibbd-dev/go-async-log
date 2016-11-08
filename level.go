@@ -1,5 +1,9 @@
 package asyncLog
 
+import (
+	"math/rand"
+)
+
 // 日志优先级
 type Priority int
 
@@ -58,6 +62,11 @@ func (lf *LogFile) Fatal(msg string) error {
 }
 
 func (lf *LogFile) writeLevelMsg(msg string, level Priority) error {
+	if lf.probability < 1.0 && rand.Float32() > lf.probability {
+		// 按照概率写入
+		return nil
+	}
+
 	if level >= lf.level {
 		return lf.Write(levelTitle[level] + " " + msg)
 	}
