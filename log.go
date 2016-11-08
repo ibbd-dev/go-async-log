@@ -213,8 +213,6 @@ func (lf *LogFile) appendCache(msg string) {
 
 // 同步缓存到文件中
 func (lf *LogFile) flush() error {
-	lf.writeMutex.Lock()
-	defer lf.writeMutex.Unlock()
 
 	lf.sync.status = statusDoing
 	defer func() {
@@ -308,6 +306,9 @@ func (lf *LogFile) openFile() (*os.File, error) {
 // 打开日志文件(不缓存句柄)
 func (lf *LogFile) openFileNoCache() (*os.File, error) {
 	logFilename := lf.filename + "." + lf.getFilenameSuffix()
+
+	lf.writeMutex.Lock()
+	defer lf.writeMutex.Unlock()
 	file, err := os.OpenFile(logFilename, fileFlag, fileOpenMode)
 	if err != nil {
 		// 重试
