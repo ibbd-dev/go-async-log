@@ -195,7 +195,7 @@ func (lf *LogFile) WriteJson(data interface{}) error {
 	}
 
 	if lf.cache.use {
-		lf.appendCache(string(bts))
+		lf.appendCache(string(bts) + newlineChar)
 		return nil
 	}
 
