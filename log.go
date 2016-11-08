@@ -251,7 +251,7 @@ func (lf *LogFile) directWrite(msg string) error {
 	if err != nil {
 		panic(err)
 	}
-	//defer file.Close()
+	defer file.Close()
 
 	lf.writeMutex.Lock()
 	_, err = file.WriteString(msg)
