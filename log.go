@@ -18,8 +18,9 @@ type asyncLogType struct {
 }
 
 type LogFile struct {
-	filename string // 原始文件名（包含完整目录）
-	flag     int    // 默认为log.LstdFlags
+	filename   string     // 原始文件名（包含完整目录）
+	flag       int        // 默认为log.LstdFlags
+	writeMutex sync.Mutex // 写文件时的锁
 
 	// 同步设置
 	sync struct {
@@ -35,10 +36,10 @@ type LogFile struct {
 	cache struct {
 		use  bool     // 是否使用缓存
 		data []string // 缓存数据
-	}
 
-	// 写log时的互斥锁
-	writeMutex sync.Mutex
+		// 写cache时的互斥锁
+		writeMutex sync.Mutex
+	}
 
 	// 文件切割
 	logRotate struct {
@@ -205,13 +206,16 @@ func (lf *LogFile) WriteJson(data interface{}) error {
 //*********************** 以下是私有函数 ************************************
 
 func (lf *LogFile) appendCache(msg string) {
-	lf.writeMutex.Lock()
+	lf.cache.writeMutex.Lock()
 	lf.cache.data = append(lf.cache.data, msg)
-	lf.writeMutex.Unlock()
+	lf.cache.writeMutex.Unlock()
 }
 
 // 同步缓存到文件中
 func (lf *LogFile) flush() error {
+	lf.writeMutex.Lock()
+	defer lf.writeMutex.Unlock()
+
 	lf.sync.status = statusDoing
 	defer func() {
 		lf.sync.status = statusDone
@@ -225,10 +229,10 @@ func (lf *LogFile) flush() error {
 	defer file.Close()
 
 	// 获取缓存数据
-	lf.writeMutex.Lock()
+	lf.cache.writeMutex.Lock()
 	cache := lf.cache.data
 	lf.cache.data = make([]string, 0, cacheInitCap)
-	lf.writeMutex.Unlock()
+	lf.cache.writeMutex.Unlock()
 
 	if len(cache) == 0 {
 		return nil
