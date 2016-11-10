@@ -81,7 +81,8 @@ const (
 	fileFlag = os.O_WRONLY | os.O_CREATE | os.O_APPEND
 
 	// 换行符
-	newlineChar = "\n"
+	newlineStr  = "\n"
+	newlineChar = '\n'
 
 	// 缓存切片的初始容量
 	cacheInitCap = 64
@@ -171,9 +172,9 @@ func (lf *LogFile) SetProbability(probability float32) {
 // Write 写缓存
 func (lf *LogFile) Write(msg string) error {
 	if lf.flag == StdFlag {
-		msg = nowFunc().Format(logTimeFormat) + " " + msg + newlineChar
+		msg = nowFunc().Format(logTimeFormat) + " " + msg + newlineStr
 	} else {
-		msg = msg + newlineChar
+		msg = msg + newlineStr
 	}
 
 	if lf.cache.use {
@@ -195,9 +196,10 @@ func (lf *LogFile) WriteJson(data interface{}) error {
 	if err != nil {
 		return err
 	}
+	bts = append(bts, newlineChar)
 
 	if lf.cache.use {
-		lf.appendCache(string(bts) + newlineChar)
+		lf.appendCache(string(bts))
 		return nil
 	}
 
@@ -263,7 +265,7 @@ func (lf *LogFile) directWrite(msg []byte) error {
 	if err != nil {
 		panic(err)
 	}
-	defer file.Close()
+	//defer file.Close()
 
 	lf.logRotate.mutex.Lock()
 	_, err = file.Write(msg)

@@ -40,6 +40,14 @@ func TestNewLogFile(t *testing.T) {
 	_ = lf1.Write("lf1: ---hello world3")
 	_ = lf1.Write("lf1: ---hello world4")
 
+	time.Sleep(time.Second * 2)
+}
+
+func TestJson(t *testing.T) {
+	lf1 := NewLogFile("/tmp/test-json.log")
+	lf1.SetFlags(NoFlag)
+	lf1.SetUseCache(false)
+
 	var hello = struct {
 		Hello string
 		World int
