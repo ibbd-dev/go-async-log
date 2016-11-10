@@ -48,6 +48,8 @@ func TestNewLogFile(t *testing.T) {
 		World: 12,
 	}
 	_ = lf1.WriteJson(hello)
+	_ = lf1.WriteJson(hello)
+	_ = lf1.WriteJson(hello)
 
 	time.Sleep(time.Second * 2)
 }
