@@ -2,6 +2,7 @@ package asyncLog
 
 import (
 	"math/rand"
+	"fmt"
 )
 
 // 日志优先级
@@ -41,35 +42,37 @@ func (lf *LogFile) SetLevel(logLevel Priority) {
 	lf.level = logLevel
 }
 
-func (lf *LogFile) Debug(msg string) error {
-	return lf.writeLevelMsg(msg, LevelDebug)
+func (lf *LogFile) Debug(format string, a ...interface{}) error {
+	return lf.writeLevelMsg(LevelDebug, format, a...)
 }
 
-func (lf *LogFile) Info(msg string) error {
-	return lf.writeLevelMsg(msg, LevelInfo)
+func (lf *LogFile) Info(format string, a ...interface{}) error {
+	return lf.writeLevelMsg(LevelInfo, format, a...)
 }
 
-func (lf *LogFile) Warn(msg string) error {
-	return lf.writeLevelMsg(msg, LevelWarn)
+func (lf *LogFile) Warn(format string, a ...interface{}) error {
+	return lf.writeLevelMsg(LevelWarn, format, a...)
 }
 
-func (lf *LogFile) Error(msg string) error {
-	return lf.writeLevelMsg(msg, LevelError)
+func (lf *LogFile) Error(format string, a ...interface{}) error {
+	return lf.writeLevelMsg(LevelError, format, a...)
 }
 
-func (lf *LogFile) Fatal(msg string) error {
-	return lf.writeLevelMsg(msg, LevelFatal)
+func (lf *LogFile) Fatal(format string, a ...interface{}) error {
+	return lf.writeLevelMsg(LevelFatal, format, a...)
 }
 
-func (lf *LogFile) writeLevelMsg(msg string, level Priority) error {
+func (lf *LogFile) writeLevelMsg(level Priority, format string, a ...interface{}) error {
 	if lf.probability < 1.0 && rand.Float32() > lf.probability {
 		// 按照概率写入
 		return nil
 	}
 
 	if level >= lf.level {
+		msg := fmt.Sprintf(format, a...)
 		return lf.Write(levelTitle[level] + " " + msg)
 	}
 
 	return nil
 }
+
